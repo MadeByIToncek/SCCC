@@ -38,8 +38,8 @@ jobs:
           out/linux-x64.tar.gz
           out/linux-arm.tar.gz
           out/linux-arm64.tar.gz
-          out/osx-x64
-          out/osx-arm64
+          out/osx-x64.tar.gz
+          out/osx-arm64.tar.gz
     - uses: actions/upload-artifact@v3
       with:
         name: build
@@ -49,5 +49,5 @@ jobs:
           out/linux-x64.tar.gz
           out/linux-arm.tar.gz
           out/linux-arm64.tar.gz
-          out/osx-x64
-          out/osx-arm64
+          out/osx-x64.tar.gz
+          out/osx-arm64.tar.gz
