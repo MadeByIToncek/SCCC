@@ -1,0 +1,49 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: .NET Release
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build all packages
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: write
+      security-events: write  
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 7.0.x
+    - name: Build
+      run: | 
+        dotnet restore
+        mkdir out
+        bash build.sh
+    - uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "latest"
+        prerelease: true
+        title: "Development Build"
+        files: |
+          out/win-x64.tar.gz
+          out/win-x86.tar.gz
+          out/linux-x64.tar.gz
+          out/linux-arm.tar.gz
+          out/linux-arm64.tar.gz
+    - uses: actions/upload-artifact@v3
+      with:
+        name: build
+        path: |
+          out/win-x64.tar.gz
+          out/win-x86.tar.gz
+          out/linux-x64.tar.gz
+          out/linux-arm.tar.gz
+          linux-arm64.tar.gz
