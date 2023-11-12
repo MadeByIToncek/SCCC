@@ -9,16 +9,22 @@
 // -----------------------------------------------------------------------------
 namespace SCCC
 {
+    using NStack;
     using System;
     using System.Collections.Generic;
     using System.Data;
+    using System.Diagnostics;
     using System.Globalization;
+    using System.Threading;
+    using System.Timers;
     using Terminal.Gui;
     public partial class MyView
     {
-        public string timingsPath;
+        public string timingsPath = "S:\\dev\\iql\\SCCC\\test.timings";
         public static SCCCManager runtime;
+        private static System.Timers.Timer aTimer;
         public static DateTime tZero = new DateTime(2023,11,17,15,00,00);
+        public static State state = State.UNKNOWN;
         public MyView()
         {
             InitializeComponent();
@@ -26,6 +32,7 @@ namespace SCCC
 
             start.Clicked += () =>
             {
+                state = State.CHANGING;
                 var ok = new Button()
                 {
                     X = Pos.Center(),
@@ -38,9 +45,10 @@ namespace SCCC
                 var entry = new TextField()
                 {
                     X = 1,
-                    Y = 1,
+                    Y = 2,
                     Width = Dim.Fill() - 1,
-                    Height = 1
+                    Height = 1,
+                    Text = "3333"
                 };
 
                 ok.Clicked += () =>
@@ -52,30 +60,80 @@ namespace SCCC
                     }
                     catch (Exception e)
                     {
-                        MessageBox.Query("ALERT", "Unable to parse port number \"" + entry.Text.ToString() + "\"", "Ok");
+                        MessageBox.Query("ALERT", "Unable to parse port number \"" + entry.Text.ToString() + "\"\n Starting server with port 3333", "Ok");
+                        port = 3333;
+                        runtime.StartServer(port);
+                        while (!runtime.ready) { }
                         Application.RequestStop();
                         Application.RequestStop();
                         return;
                     };
                     if (port > 65535 || port < 0)
                     {
-                        MessageBox.Query("ALERT", "Port number \"" + entry.Text.ToString() + "\" outside allowed range 1-65535", "Ok");
+                        MessageBox.Query("ALERT", "Port number \"" + entry.Text.ToString() + "\" outside allowed range 1-65535\n Starting server with port 3333", "Ok");
+                        runtime.StartServer(port);
+                        while (!runtime.ready) { }
                         Application.RequestStop();
                         Application.RequestStop();
                         return;
                     }
-                    Console.WriteLine(port);
-                    //runtime.StartServer();
+                    //Console.WriteLine(port);
+                    runtime.StartServer(port);
+                    while(!runtime.ready) { }
+                    state = State.SERVER;
                     Application.RequestStop();
                 };
 
-
-
-                var dialog = new Dialog("Enter Address", 30, 7, ok);
+                var dialog = new Dialog("Enter server port", 30, 7, ok);
                 dialog.Add(entry);
                 Application.Run(dialog);
             };
+            setT0.Clicked += () =>
+            {
 
+                var ok = new Button()
+                {
+                    X = Pos.Center(),
+                    Y = 0,
+                    Text = "Calibrate!",
+                    Width = 9,
+                    Height = 1,
+                };
+
+                var entry = new TextField()
+                {
+                    X = 1,
+                    Y = 2,
+                    Width = Dim.Fill() - 1,
+                    Height = 1,
+                    Text = "+/-00:00:00"
+                };
+
+                ok.Clicked += () =>
+                {
+                    try
+                    {
+                        string inp = entry.Text.ToString();
+                        Console.WriteLine(inp);
+                        bool subtract = inp.Substring(0, 1) == "-";
+                        int hours = int.Parse(inp.Substring(1, 2));
+                        int minutes = int.Parse(inp.Substring(4, 2));
+                        int seconds = int.Parse(inp.Substring(7, 2));
+                        int totalseconds = (((hours * 60) + minutes) * 60) + seconds;
+                        if (subtract) totalseconds = -totalseconds;
+                        tZero = DateTime.Now.Subtract(TimeSpan.FromSeconds(totalseconds));
+                        runtime.UpdateT0();
+                    } catch (Exception ex)
+                    {
+                        MessageBox.Query("ALERT", "Unable to parse time", "Ok");
+                    }
+                    Application.RequestStop();
+                };
+
+                var dialog = new Dialog("Enter server port", 30, 7, ok);
+                dialog.Add(entry);
+                Application.Run(dialog);
+            };
             sync.Clicked += () =>
             {
                 if(timingsPath == null)
@@ -84,8 +142,16 @@ namespace SCCC
                 }
                 UpdateTimings(timingsPath);
             };
+            path.Clicked += () =>
+            {
+                PickFile();
+            };
+
+            SetTimer();
+            date.Text = DateTime.Now.ToString("d");
+            UpdateTimings(timingsPath);
+            state = State.LOCAL;
         }
-       
         private void PickFile()
         {
             string[] exts = new string[1];
@@ -108,7 +174,6 @@ namespace SCCC
         {
             try
             {
-
                 var dt = new DataTable();
 
 
@@ -116,7 +181,6 @@ namespace SCCC
                 dt.Columns.Add(new DataColumn("Abs.Time", typeof(string)));
                 dt.Columns.Add(new DataColumn("Rel.Time", typeof(string)));
                 dt.Columns.Add(new DataColumn("Description", typeof(string)));
-
                 // Open the text file using a stream reader.
                 using (var sr = new StreamReader(v))
                 {
@@ -146,16 +210,68 @@ namespace SCCC
             }
             catch (Exception e)
             {
-                Console.WriteLine("The file could not be read:");
-                Console.WriteLine(e.Message);
                 MessageBox.Query("ALERT", "Unable to read .timings file \"" + v + "\"", "Ok");
-                Application.RequestStop();
             }
         }
 
         private string toString(TimeSpan diff)
         {
             return string.Format("{0:g}", diff);
+        }
+
+        private void SetTimer()
+        {
+            // Create a timer with a two second interval.
+            aTimer = new System.Timers.Timer(250);
+            // Hook up the Elapsed event for the timer. 
+            aTimer.Elapsed += TimeUpdate;
+            aTimer.AutoReset = true;
+            aTimer.Enabled = true;
+        }
+
+        private void TimeUpdate(Object source, ElapsedEventArgs e)
+        {
+            Application.MainLoop.Invoke(() =>
+            {
+                time.Text = DateTime.Now.Subtract(TimeSpan.FromHours(-5)).ToString("T", CultureInfo.CreateSpecificCulture("cs-CZ")) +
+                " CST // " +
+                DateTime.Now.ToString("T", CultureInfo.CreateSpecificCulture("cs-CZ")) +
+                " CET";
+                string prefix = "";
+                if ((DateTime.Now - tZero).TotalHours > 24)
+                {
+                    prefix = "L*+";
+                }
+                else if ((DateTime.Now - tZero).TotalHours < -24)
+                {
+                    prefix = "L*-";
+                }
+                else
+                {
+                    if (Math.Round((DateTime.Now - tZero).TotalSeconds) > 0)
+                    {
+                        prefix = "T+ ";
+                    }
+                    else
+                    {
+                        prefix = "T- ";
+                    }
+                }
+
+                tZeroLabel.Text = format(DateTime.Now - tZero, prefix);
+
+
+                status.ColorScheme = StateConvertor.GetScheme(state);
+                status.Text = state.ToString();
+            });
+        }
+
+        private string format(TimeSpan timeSpan, string prefix)
+        {
+            int hours = Math.Abs(timeSpan.Hours);
+            int minutes = Math.Abs(timeSpan.Minutes);
+            int seconds = Math.Abs(timeSpan.Seconds);
+            return String.Format("{0}{1:D2}:{2:D2}:{3:D2}",prefix,hours,minutes,seconds);
         }
     }
 

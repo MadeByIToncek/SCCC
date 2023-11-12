@@ -25,6 +25,8 @@ namespace SCCC {
         
         private Terminal.Gui.Label label1;
         
+        private Terminal.Gui.Label status;
+        
         private Terminal.Gui.TableView tableView;
         
         private Terminal.Gui.Button start;
@@ -33,32 +35,30 @@ namespace SCCC {
         
         private Terminal.Gui.Button path;
         
-        private Terminal.Gui.TextView time;
+        private Terminal.Gui.Label time;
         
         private Terminal.Gui.Button sync;
         
-        private Terminal.Gui.TextView date;
+        private Terminal.Gui.Label date;
         
-        private Terminal.Gui.TextView tMinus;
+        private Terminal.Gui.Label tZeroLabel;
         
         private Terminal.Gui.Button setT0;
         
         private Terminal.Gui.Button clearT0;
         
-        private Terminal.Gui.Button enterT0;
-        
         private void InitializeComponent() {
-            this.enterT0 = new Terminal.Gui.Button();
             this.clearT0 = new Terminal.Gui.Button();
             this.setT0 = new Terminal.Gui.Button();
-            this.tMinus = new Terminal.Gui.TextView();
-            this.date = new Terminal.Gui.TextView();
+            this.tZeroLabel = new Terminal.Gui.Label();
+            this.date = new Terminal.Gui.Label();
             this.sync = new Terminal.Gui.Button();
-            this.time = new Terminal.Gui.TextView();
+            this.time = new Terminal.Gui.Label();
             this.path = new Terminal.Gui.Button();
             this.connect = new Terminal.Gui.Button();
             this.start = new Terminal.Gui.Button();
             this.tableView = new Terminal.Gui.TableView();
+            this.status = new Terminal.Gui.Label();
             this.label1 = new Terminal.Gui.Label();
             this.redOnBlack = new Terminal.Gui.ColorScheme();
             this.redOnBlack.Normal = new Terminal.Gui.Attribute(Terminal.Gui.Color.Red, Terminal.Gui.Color.Black);
@@ -84,7 +84,7 @@ namespace SCCC {
             this.tgDefault.Focus = new Terminal.Gui.Attribute(Terminal.Gui.Color.Black, Terminal.Gui.Color.Gray);
             this.tgDefault.HotFocus = new Terminal.Gui.Attribute(Terminal.Gui.Color.BrightBlue, Terminal.Gui.Color.Gray);
             this.tgDefault.Disabled = new Terminal.Gui.Attribute(Terminal.Gui.Color.Brown, Terminal.Gui.Color.Blue);
-            this.Width = Dim.Fill(0);
+            this.Width = 140;
             this.Height = Dim.Fill(0);
             this.X = 0;
             this.Y = 0;
@@ -93,7 +93,7 @@ namespace SCCC {
             this.Modal = false;
             this.IsMdiContainer = false;
             this.Border.BorderStyle = Terminal.Gui.BorderStyle.Single;
-            this.Border.Effect3D = false;
+            this.Border.Effect3D = true;
             this.Border.Effect3DBrush = null;
             this.Border.DrawMarginFrame = true;
             this.TextAlignment = Terminal.Gui.TextAlignment.Left;
@@ -107,6 +107,15 @@ namespace SCCC {
             this.label1.Text = "Starship Controller Command Center";
             this.label1.TextAlignment = Terminal.Gui.TextAlignment.Left;
             this.Add(this.label1);
+            this.status.Width = 20;
+            this.status.Height = 1;
+            this.status.X = Pos.Right(label1) + 2;
+            this.status.Y = 0;
+            this.status.Visible = true;
+            this.status.Data = "status";
+            this.status.Text = "UNKNOWN";
+            this.status.TextAlignment = Terminal.Gui.TextAlignment.Left;
+            this.Add(this.status);
             this.tableView.Width = Dim.Fill(1);
             this.tableView.Height = Dim.Fill(1);
             this.tableView.X = Pos.Right(connect) + 1;
@@ -168,14 +177,11 @@ namespace SCCC {
             this.path.TextAlignment = Terminal.Gui.TextAlignment.Centered;
             this.path.IsDefault = false;
             this.Add(this.path);
-            this.time.Width = 28;
+            this.time.Width = 25;
             this.time.Height = 1;
             this.time.X = 11;
             this.time.Y = 4;
             this.time.Visible = true;
-            this.time.AllowsTab = true;
-            this.time.AllowsReturn = true;
-            this.time.WordWrap = false;
             this.time.Data = "time";
             this.time.Text = "00:00:00 CST // 00:00:00 CET";
             this.time.TextAlignment = Terminal.Gui.TextAlignment.Left;
@@ -190,32 +196,26 @@ namespace SCCC {
             this.sync.TextAlignment = Terminal.Gui.TextAlignment.Centered;
             this.sync.IsDefault = false;
             this.Add(this.sync);
-            this.date.Width = 8;
+            this.date.Width = 7;
             this.date.Height = 1;
             this.date.X = 11;
             this.date.Y = 6;
             this.date.Visible = true;
-            this.date.AllowsTab = true;
-            this.date.AllowsReturn = true;
-            this.date.WordWrap = false;
             this.date.Data = "date";
             this.date.Text = "11/11/23";
             this.date.TextAlignment = Terminal.Gui.TextAlignment.Left;
             this.Add(this.date);
-            this.tMinus.Width = 11;
-            this.tMinus.Height = 1;
-            this.tMinus.X = 28;
-            this.tMinus.Y = 6;
-            this.tMinus.Visible = true;
-            this.tMinus.AllowsTab = true;
-            this.tMinus.AllowsReturn = true;
-            this.tMinus.WordWrap = false;
-            this.tMinus.Data = "tMinus";
-            this.tMinus.Text = "T- 69:42:00";
-            this.tMinus.TextAlignment = Terminal.Gui.TextAlignment.Left;
-            this.Add(this.tMinus);
-            this.setT0.Width = 10;
-            this.setT0.Height = 1;
+            this.tZeroLabel.Width = 11;
+            this.tZeroLabel.Height = 1;
+            this.tZeroLabel.X = 28;
+            this.tZeroLabel.Y = 6;
+            this.tZeroLabel.Visible = true;
+            this.tZeroLabel.Data = "tZeroLabel";
+            this.tZeroLabel.Text = "T- 69:42:00";
+            this.tZeroLabel.TextAlignment = Terminal.Gui.TextAlignment.Right;
+            this.Add(this.tZeroLabel);
+            this.setT0.Width = 18;
+            this.setT0.Height = 3;
             this.setT0.X = 1;
             this.setT0.Y = 8;
             this.setT0.Visible = true;
@@ -224,9 +224,9 @@ namespace SCCC {
             this.setT0.TextAlignment = Terminal.Gui.TextAlignment.Centered;
             this.setT0.IsDefault = false;
             this.Add(this.setT0);
-            this.clearT0.Width = 12;
-            this.clearT0.Height = 1;
-            this.clearT0.X = 13;
+            this.clearT0.Width = 20;
+            this.clearT0.Height = 3;
+            this.clearT0.X = 19;
             this.clearT0.Y = 8;
             this.clearT0.Visible = true;
             this.clearT0.Data = "clearT0";
@@ -234,16 +234,6 @@ namespace SCCC {
             this.clearT0.TextAlignment = Terminal.Gui.TextAlignment.Centered;
             this.clearT0.IsDefault = false;
             this.Add(this.clearT0);
-            this.enterT0.Width = 12;
-            this.enterT0.Height = 1;
-            this.enterT0.X = 26;
-            this.enterT0.Y = 8;
-            this.enterT0.Visible = true;
-            this.enterT0.Data = "enterT0";
-            this.enterT0.Text = "Enter T0";
-            this.enterT0.TextAlignment = Terminal.Gui.TextAlignment.Centered;
-            this.enterT0.IsDefault = false;
-            this.Add(this.enterT0);
         }
     }
 }

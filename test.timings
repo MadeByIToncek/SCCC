@@ -1,3 +1,20 @@
--10:Showerhead
+-7200:SpaceX Flight Director conducts poll and verifies GO for propellant load
+-5820:B9 LOX & LCH4 load start
+-4620:S25 LCH4 load start
+-4380:S25 LOX load start
+-1180:B9+S25 engine chill
+-10:Flame deflector
 -8:Ingition
 2:Liftoff
+52:Max-Q
+159:Booster MECO (most engines cut off)
+161:Hot-staging (Starship Raptor ignition and stage separation)
+173:Booster boostback burn startup
+227:Booster boostback burn shutdown
+378:Booster is transonic
+390:Booster landing burn startup
+408:Booster landing burn shutdown
+513:Starship engine cutoff
+4641:Starship entry
+5323:Starship is transonic
+5400:An exciting landing!

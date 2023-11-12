@@ -11,19 +11,21 @@ namespace SCCC
 {
     public class SCCCManager : WebSocketBehavior
     {
-        bool _ready;
-        bool _server;
+        public bool ready;
+        public bool server;
+        public WebSocketServer wssv;
         
         public SCCCManager() {
-            _ready = false;
+            ready = false;
         }
         public void StartServer(int port) {
-            _server = true;
-            var wssv = new WebSocketServer(port, false);
+            server = true;
+            wssv = new WebSocketServer(port, false);
 
             wssv.AddWebSocketService<SCCCManager>("/");
+            wssv.AddWebSocketService<T0>("/t0");
             wssv.Start();
-            _ready = true;
+            ready = true;
         }
 
         protected override void OnMessage(MessageEventArgs e)
@@ -35,7 +37,19 @@ namespace SCCC
         }
         protected override void OnClose(CloseEventArgs e)
         {
-            _ready = false;
+            ready = false;
+        }
+
+        public void UpdateT0()
+        {
+            wssv.WebSocketServices["/t0"].Sessions.BroadcastAsync(MyView.tZero.Subtract(TimeSpan.FromHours(1)).ToString("R"), () => { });
+        }
+    }
+    public class T0 : WebSocketBehavior
+    {
+        protected override void OnMessage(MessageEventArgs e)
+        {
+            Sessions.BroadcastAsync(MyView.tZero.ToString("R"), () => {});
         }
     }
 }
