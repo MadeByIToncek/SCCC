@@ -27,6 +27,8 @@ namespace SCCC {
         
         private Terminal.Gui.Label status;
         
+        private Terminal.Gui.Button reset;
+        
         private Terminal.Gui.TableView tableView;
         
         private Terminal.Gui.Button start;
@@ -58,6 +60,7 @@ namespace SCCC {
             this.connect = new Terminal.Gui.Button();
             this.start = new Terminal.Gui.Button();
             this.tableView = new Terminal.Gui.TableView();
+            this.reset = new Terminal.Gui.Button();
             this.status = new Terminal.Gui.Label();
             this.label1 = new Terminal.Gui.Label();
             this.redOnBlack = new Terminal.Gui.ColorScheme();
@@ -107,15 +110,26 @@ namespace SCCC {
             this.label1.Text = "Starship Controller Command Center";
             this.label1.TextAlignment = Terminal.Gui.TextAlignment.Left;
             this.Add(this.label1);
-            this.status.Width = 20;
+            this.status.Width = 10;
             this.status.Height = 1;
-            this.status.X = Pos.Right(label1) + 2;
+            this.status.X = Pos.Left(reset) - 11;
             this.status.Y = 0;
             this.status.Visible = true;
             this.status.Data = "status";
             this.status.Text = "UNKNOWN";
-            this.status.TextAlignment = Terminal.Gui.TextAlignment.Left;
+            this.status.TextAlignment = Terminal.Gui.TextAlignment.Right;
             this.Add(this.status);
+            this.reset.Width = 9;
+            this.reset.Height = 1;
+            this.reset.X = Pos.AnchorEnd(10);
+            this.reset.Y = 0;
+            this.reset.Visible = true;
+            this.reset.ColorScheme = this.redOnBlack;
+            this.reset.Data = "reset";
+            this.reset.Text = "RESET";
+            this.reset.TextAlignment = Terminal.Gui.TextAlignment.Centered;
+            this.reset.IsDefault = false;
+            this.Add(this.reset);
             this.tableView.Width = Dim.Fill(1);
             this.tableView.Height = Dim.Fill(1);
             this.tableView.X = Pos.Right(connect) + 1;

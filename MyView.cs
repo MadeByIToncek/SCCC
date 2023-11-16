@@ -9,13 +9,10 @@
 // -----------------------------------------------------------------------------
 namespace SCCC
 {
-    using NStack;
     using System;
     using System.Collections.Generic;
     using System.Data;
-    using System.Diagnostics;
     using System.Globalization;
-    using System.Threading;
     using System.Timers;
     using Terminal.Gui;
     public partial class MyView
@@ -80,11 +77,44 @@ namespace SCCC
                     //Console.WriteLine(port);
                     runtime.StartServer(port);
                     while(!runtime.ready) { }
-                    state = State.SERVER;
                     Application.RequestStop();
                 };
 
                 var dialog = new Dialog("Enter server port", 30, 7, ok);
+                dialog.Add(entry);
+                Application.Run(dialog);
+            };
+            connect.Clicked += () =>
+            {
+                state = State.CHANGING;
+                var ok = new Button()
+                {
+                    X = Pos.Center(),
+                    Y = 0,
+                    Text = "Connect!",
+                    Width = 9,
+                    Height = 1,
+                };
+
+                var entry = new TextField()
+                {
+                    X = 1,
+                    Y = 2,
+                    Width = Dim.Fill() - 1,
+                    Height = 1,
+                    Text = "ws://localhost:2222"
+                };
+
+                ok.Clicked += () =>
+                {
+                    string addr = entry.Text.ToString();
+                    //Console.WriteLine(port);
+                    runtime.StartClient(addr);
+                    while (!runtime.ready) { }
+                    Application.RequestStop();
+                };
+
+                var dialog = new Dialog("Enter server port", 90, 10, ok);
                 dialog.Add(entry);
                 Application.Run(dialog);
             };
@@ -122,7 +152,7 @@ namespace SCCC
                         int totalseconds = (((hours * 60) + minutes) * 60) + seconds;
                         if (subtract) totalseconds = -totalseconds;
                         tZero = DateTime.Now.Subtract(TimeSpan.FromSeconds(totalseconds));
-                        runtime.UpdateT0();
+                        runtime.sendT0Update();
                     } catch (Exception ex)
                     {
                         MessageBox.Query("ALERT", "Unable to parse time", "Ok");
@@ -145,6 +175,13 @@ namespace SCCC
             path.Clicked += () =>
             {
                 PickFile();
+            };
+            reset.Clicked += () =>
+            {
+                state = State.CHANGING;
+                tZero = new DateTime(2023, 11, 17, 15, 00, 00);
+                runtime.stop();
+                state = State.UNKNOWN;
             };
 
             SetTimer();
@@ -174,44 +211,48 @@ namespace SCCC
         {
             try
             {
-                var dt = new DataTable();
-
-
-                int explicitCols = 6;
-                dt.Columns.Add(new DataColumn("Abs.Time", typeof(string)));
-                dt.Columns.Add(new DataColumn("Rel.Time", typeof(string)));
-                dt.Columns.Add(new DataColumn("Description", typeof(string)));
                 // Open the text file using a stream reader.
                 using (var sr = new StreamReader(v))
                 {
-
-
                     string input = sr.ReadToEnd();
-                    string[] lines = input.Split(new char[] { '\n', });
-                    tableView.RemoveAll();
-                    foreach (var line in lines)
-                    {
-                        int time = int.Parse(line.Split(new char[] { ':', })[0].Replace("\r", ""));
-                        string desc = line.Split(new char[] { ':', })[1].Replace("\r", "");
-
-                        string abs = tZero.AddSeconds(time).ToShortTimeString();
-                        string rel = toString((tZero.AddSeconds(time)) - tZero);
-
-
-                        List<object> row = new List<object>(){
-                            abs,
-                            rel,
-                            desc
-                        };
-                        dt.Rows.Add(row.ToArray());
-                    }
-                    tableView.Table = dt;
+                    updateTable(input);
+                    runtime.sendTimeTableUpdate(input);
                 }
             }
             catch (Exception e)
             {
                 MessageBox.Query("ALERT", "Unable to read .timings file \"" + v + "\"", "Ok");
             }
+        }
+
+
+        public void updateTable(string data) 
+        {
+            var dt = new DataTable();
+            int explicitCols = 6;
+            dt.Columns.Add(new DataColumn("Abs.Time", typeof(string)));
+            dt.Columns.Add(new DataColumn("Rel.Time", typeof(string)));
+            dt.Columns.Add(new DataColumn("Description", typeof(string)));
+
+            string[] lines = data.Split(new char[] { '\n', });
+            tableView.RemoveAll();
+            foreach (var line in lines)
+            {
+                int time = int.Parse(line.Split(new char[] { ':', })[0].Replace("\r", ""));
+                string desc = line.Split(new char[] { ':', })[1].Replace("\r", "");
+
+                string abs = tZero.AddSeconds(time).ToShortTimeString();
+                string rel = toString((tZero.AddSeconds(time)) - tZero);
+
+
+                List<object> row = new List<object>(){
+                            abs,
+                            rel,
+                            desc
+                        };
+                dt.Rows.Add(row.ToArray());
+            }
+            tableView.Table = dt;
         }
 
         private string toString(TimeSpan diff)
